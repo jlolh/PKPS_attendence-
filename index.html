@@ -3,379 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>課後功課輔導班點名系統 </title>
+    <title>課後功課輔導班點名系統</title>
     <!-- 引入圖示庫 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- 引入 Excel 匯出工具 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <!-- 引入 Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- 引入 Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
+
     <style>
-        /* --- Bureau F 風格變數 --- */
+        /* --- 設計變數 --- */
         :root {
-            --primary-color: #1a1a1a; /* 主要顏色 (近黑) */
-            --success-color: #22c55e; /* 綠色 */
-            --danger-color: #ef4444;  /* 紅色 */
-            
-            --background-color: #fdfdfd; /* 背景 (米白) */
-            --card-bg-color: #ffffff;    /* 卡片背景 (純白) */
-            
-            --text-color: #1a1a1a;       /* 主要文字 */
-            --text-muted-color: #737373; /* 次要文字 (灰色) */
-            --border-color: #e5e5e5;     /* 邊框顏色 */
-            
-            --font-heading: 'Playfair Display', serif;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #eef2ff;
+            --success-color: #10b981;
+            --success-light: #ecfdf5;
+            --danger-color: #f43f5e;
+            --danger-light: #fff1f2;
+            --info-color: #3b82f6;
+
+            --background-color: #f1f5f9;
+            --card-bg-color: #ffffff;
+
+            --text-color: #0f172a;
+            --text-muted-color: #64748b;
+            --border-color: #e2e8f0;
+
+            --font-heading: 'Poppins', sans-serif;
             --font-body: 'Inter', sans-serif;
 
-            --base-font-size: 16px;
-            --border-radius: 0.25rem; 
+            --border-radius: 0.75rem;
+            --border-radius-sm: 0.5rem;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
         }
 
         /* --- 全局樣式 --- */
+        * { box-sizing: border-box; }
+
         body {
             font-family: var(--font-body);
             margin: 0;
             background-color: var(--background-color);
             color: var(--text-color);
-            font-size: var(--base-font-size);
-            display: flex;
+            font-size: 16px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             line-height: 1.5;
-        }
-        
-        * {
-            box-sizing: border-box;
+            min-height: 100vh;
         }
 
-        h1, h2, h3, .card-title, .page-title, .sidebar-header h1 {
+        h1, h2, h3 {
             font-family: var(--font-heading);
             color: var(--text-color);
-            font-weight: 600;
         }
 
-        /* --- 主佈局 --- */
-        .layout-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            padding: 2rem 1.5rem;
-            overflow-y: auto;
-            max-height: 100vh;
-        }
-        .page-title {
-            font-size: 2.5rem;
-            margin-top: 0;
-            margin-bottom: 1.5rem;
+        /* --- 頁首 --- */
+        .page-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            padding: 1.25rem 2rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
         }
 
         .page-title .logo {
-            font-size: 2.2rem;
+            font-size: 1.4rem;
+            opacity: 0.9;
         }
-        
+
         .main-actions {
             display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .action-link {
             text-decoration: none;
-            color: var(--text-muted-color);
+            color: rgba(255, 255, 255, 0.85);
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: color 0.2s;
+            gap: 6px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .action-link:hover {
-            color: var(--text-color);
-        }
-        
-        .action-link + .action-link {
-            border-left: 1px solid var(--border-color);
-            padding-left: 1.5rem;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
-        /* --- 區塊 --- */
-        .card {
-            background-color: transparent;
-            border: none;
-            border-radius: 0;
-            padding: 0;
-            margin-bottom: 3rem;
-            box-shadow: none;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 2rem;
+        /* --- 主佈局 --- */
+        .layout-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
         }
-        .card:last-child {
-            border-bottom: none;
+
+        /* --- 卡片 --- */
+        .card {
+            background: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .card-header {
-           all: unset;
-           margin-bottom: 1.5rem;
-           padding-bottom: 1.5rem;
-           border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
         }
+
         .card-title {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             margin: 0;
+            font-weight: 600;
+            color: var(--text-color);
         }
-        
+
+        .card-title-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 0.5rem;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
         /* --- 表單和控制項 --- */
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
+            gap: 1.5rem;
         }
-        
+
         .form-group {
             margin-bottom: 1rem;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--text-muted-color);
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
+            font-size: 0.7rem;
+            letter-spacing: 0.8px;
         }
 
         .date-picker, .form-control, select {
             width: 100%;
-            padding: 0.75rem;
-            font-size: 1rem;
-            border-radius: var(--border-radius);
-            border: 1px solid var(--border-color);
+            padding: 0.65rem 0.9rem;
+            font-size: 0.95rem;
+            border-radius: var(--border-radius-sm);
+            border: 1.5px solid var(--border-color);
             background-color: var(--card-bg-color);
             color: var(--text-color);
             transition: all 0.2s;
+            font-family: var(--font-body);
         }
-        
+
         .date-picker:focus, .form-control:focus, select:focus {
-             outline: none;
-             border-color: var(--primary-color);
-             box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.05);
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
         }
 
         .class-buttons-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
-        
+
         .class-btn {
-            padding: 0.75rem 1.25rem;
-            font-size: 1rem;
-            border: 1px solid var(--border-color);
-            background-color: transparent;
+            padding: 0.5rem 1.1rem;
+            font-size: 0.9rem;
+            border: 1.5px solid var(--border-color);
+            background-color: var(--card-bg-color);
             color: var(--text-muted-color);
             cursor: pointer;
-            border-radius: var(--border-radius);
+            border-radius: 2rem;
             transition: all 0.2s;
+            font-family: var(--font-body);
+            font-weight: 500;
         }
-        
+
         .class-btn:hover {
             border-color: var(--primary-color);
             color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(26, 26, 26, 0.1);
-            transition: all 0.2s ease;
+            background: var(--primary-light);
         }
 
         .class-btn.active {
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
-            box-shadow: 0 4px 8px rgba(26, 26, 26, 0.15);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
         }
 
         /* --- 學生名單 --- */
         .student-list {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         .student-card {
             display: grid;
             grid-template-columns: minmax(120px, 1.5fr) 2fr 1fr;
             align-items: center;
-            gap: 0;
-            padding: 1.25rem 0;
-            border-bottom: 1px solid var(--primary-color);
-            background-color: transparent;
-            border-radius: 0;
-        }
-        .student-list .student-card:last-child {
-            border-bottom: none;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: var(--border-radius-sm);
+            border: 1.5px solid var(--border-color);
+            background-color: var(--card-bg-color);
+            transition: all 0.2s;
         }
 
-        .student-card > div {
-            padding: 0 1.5rem;
+        .student-card:hover {
+            border-color: #c7d2fe;
+            box-shadow: var(--shadow-sm);
         }
-        .student-card > div:first-child {
-            padding-left: 0;
-            text-align: center;
-        }
-        .student-card > div:last-child {
-            padding-right: 0;
-        }
-        .student-card > div + div {
-            border-left: 1px solid var(--primary-color);
-        }
-        
+
         .student-name {
-            font-size: 1.1rem;
-            font-weight: 500;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
         }
 
-        /* --- 開關式按鈕設計 --- */
+        /* --- 出席開關按鈕 --- */
         .attendance-toggle {
             display: flex;
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius-sm);
             overflow: hidden;
+            border: 1.5px solid var(--border-color);
         }
 
         .toggle-btn {
             flex-grow: 1;
-            padding: 0.6rem;
-            border: 1px solid var(--border-color);
+            padding: 0.55rem 0.75rem;
+            border: none;
             background-color: transparent;
             color: var(--text-muted-color);
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            font-family: var(--font-body);
+            font-weight: 500;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .toggle-btn:first-child { border-top-left-radius: var(--border-radius); border-bottom-left-radius: var(--border-radius); border-right: none;}
-        .toggle-btn:last-child { border-top-right-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius); }
-        .toggle-btn:hover { border-color: var(--text-color); background-color: #f5f5f5; }
-        .toggle-btn.present.active { background-color: var(--success-color); color: white; border-color: var(--success-color); box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3); }
-        .toggle-btn.absent.active { background-color: var(--danger-color); color: white; border-color: var(--danger-color); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); }
+        .toggle-btn:first-child {
+            border-right: 1.5px solid var(--border-color);
+        }
 
+        .toggle-btn:hover {
+            background-color: #f8fafc;
+        }
+
+        .toggle-btn.present.active {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .toggle-btn.absent.active {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* --- 得分按鈕 --- */
         .score-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 0.5rem;
+            gap: 0.35rem;
         }
 
         .score-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 1px solid var(--border-color);
+            border: 1.5px solid var(--border-color);
             background-color: transparent;
             color: var(--text-muted-color);
-            font-size: 1rem;
-            font-weight: 500;
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            font-family: var(--font-body);
         }
-        .score-btn:hover { 
+
+        .score-btn:hover {
             border-color: var(--primary-color);
-            background-color: #f5f5f5;
-            transform: scale(1.05);
+            color: var(--primary-color);
+            background: var(--primary-light);
         }
-        .score-btn.active { 
+
+        .score-btn.active {
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
-            box-shadow: 0 2px 8px rgba(26, 26, 26, 0.2);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
         }
 
-        /* --- 其他組件 & 響應式設計 --- */
-        .loader, .empty-state { padding: 2rem; text-align: center; color: var(--text-muted-color); }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
-                max-height: 100vh;
-            }
-            .page-title {
-                font-size: 1.75rem;
-                margin-bottom: 1rem;
-            }
-            .main-actions {
-                flex-wrap: wrap;
-                gap: 0.75rem;
-                padding-bottom: 1rem;
-                margin-bottom: 1.5rem;
-            }
-            .action-link {
-                font-size: 0.9rem;
-                padding: 0.5rem 0;
-            }
-            .action-link + .action-link {
-                border-left: none;
-                padding-left: 0;
-                border-top: 1px solid var(--border-color);
-                padding-top: 0.75rem;
-                margin-top: 0.75rem;
-            }
-            .controls-grid {
-                grid-template-columns: 1fr;
-            }
-            .student-card {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                padding: 1rem 0;
-            }
-            .student-card > div {
-                padding: 0;
-                border-left: none;
-            }
-            .student-card > div + div {
-                border-left: none;
-                border-top: 1px solid var(--primary-color);
-                padding-top: 1rem;
-            }
-            .attendance-toggle {
-                width: 100%;
-            }
-            .score-buttons { 
-                justify-content: center;
-                width: 100%;
-            }
-            .student-name {
-                font-size: 1rem;
-                font-weight: 600;
-            }
+        /* --- 其他組件 --- */
+        .loader, .empty-state {
+            padding: 2.5rem;
+            text-align: center;
+            color: var(--text-muted-color);
+            font-size: 0.95rem;
         }
-        
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            display: block;
+            opacity: 0.4;
+        }
+
+        /* --- 動畫 --- */
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to   { transform: translateX(0);     opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0);     opacity: 1; }
+            to   { transform: translateX(400px); opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         /* --- 彈窗 Modal --- */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.5);
             backdrop-filter: blur(4px);
             display: flex;
             justify-content: center;
@@ -383,167 +389,313 @@
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.25s, visibility 0.25s;
             padding: 1rem;
         }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .modal-content {
             background: var(--card-bg-color);
-            padding: 2rem;
+            padding: 0;
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
             width: 90%;
             max-width: 700px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.96) translateY(8px);
+            transition: transform 0.25s ease;
             max-height: 90vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
-        .modal-overlay.show .modal-content { transform: scale(1); }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 1.25rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
+            background: #fafafa;
         }
+
         .modal-header h2 {
             margin: 0;
-            font-size: 1.75rem;
+            font-size: 1.25rem;
+            color: var(--text-color);
         }
+
         .modal-close {
             background: none;
             border: none;
-            font-size: 2rem;
+            font-size: 1.5rem;
             cursor: pointer;
             color: var(--text-muted-color);
             line-height: 1;
             transition: color 0.2s;
-            padding: 0;
+            padding: 0.25rem;
+            border-radius: 0.35rem;
         }
+
         .modal-close:hover {
-            color: var(--primary-color);
+            color: var(--text-color);
+            background: var(--border-color);
         }
-        .modal-body { overflow: auto; }
+
+        .modal-body {
+            overflow: auto;
+            padding: 1.5rem;
+        }
+
+        /* --- 按鈕 --- */
         .btn {
-            padding: 0.75rem 1.5rem;
-            border: 1px solid var(--primary-color);
-            background-color: transparent;
-            color: var(--primary-color);
-            border-radius: var(--border-radius);
-            font-size: 0.9rem;
-            font-weight: 500;
+            padding: 0.6rem 1.25rem;
+            border: 1.5px solid transparent;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            gap: 6px;
+            font-family: var(--font-body);
         }
+
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
+            border-color: var(--primary-color);
         }
+
         .btn-primary:hover {
-            background-color: #333333;
-            box-shadow: 0 2px 8px rgba(26, 26, 26, 0.2);
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
         }
-        .btn:hover { background-color: var(--primary-color); color: white; }
-        .btn-danger { 
+
+        .btn-danger {
             background-color: var(--danger-color);
             color: white;
             border-color: var(--danger-color);
         }
+
         .btn-danger:hover {
-            background-color: #dc2626;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+            background-color: #e11d48;
+            border-color: #e11d48;
+            box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
         }
-        .btn-success { 
+
+        .btn-success {
             background-color: var(--success-color);
             color: white;
             border-color: var(--success-color);
         }
+
         .btn-success:hover {
-            background-color: #16a34a;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+            background-color: #059669;
+            border-color: #059669;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
         }
-        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-        
-        .management-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem; }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: var(--text-muted-color);
+            border-color: var(--border-color);
+        }
+
+        .btn-ghost:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-sm {
+            padding: 0.3rem 0.65rem;
+            font-size: 0.8rem;
+        }
+
+        /* --- 管理彈窗 --- */
+        .management-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
         .management-list-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
-            border-radius: var(--border-radius);
-            background-color: var(--background-color);
-            border: 1px solid var(--border-color);
+            padding: 0.85rem 1rem;
+            border-radius: var(--border-radius-sm);
+            background-color: #fafbfc;
+            border: 1.5px solid var(--border-color);
             transition: all 0.2s;
         }
-        .management-list-item:hover {
-            background-color: #f0f0f0;
-            border-color: #d0d0d0;
-        }
-        .management-list-item:not(:last-child) { margin-bottom: 0.75rem; }
-        .management-list-item-name { flex-grow: 1; }
-        .management-list-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; margin-left: 1rem; }
 
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 12px; table-layout: fixed; }
-        .report-table th, .report-table td { border: 1px solid var(--border-color); padding: 6px 4px; text-align: center; width: 35px; }
-        .report-table th { background-color: var(--background-color); }
-        .report-table th:first-child, .report-table td:first-child { width: 100px; text-align: left; padding-left: 8px; font-weight: 500; position: sticky; left: 0; background-color: var(--background-color); border-right: 2px solid var(--border-color); }
-        /* [修改] 最後一欄寬度以容納 (出席/得分) */
-        .report-table th:last-child, .report-table td:last-child { width: 80px; font-weight: bold; position: sticky; right: 0; background-color: var(--background-color); border-left: 2px solid var(--border-color); }
+        .management-list-item:hover {
+            border-color: #c7d2fe;
+            background-color: var(--primary-light);
+        }
+
+        .management-list-item:not(:last-child) {
+            margin-bottom: 0.5rem;
+        }
+
+        .management-list-item-name {
+            flex-grow: 1;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .management-list-item-actions {
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        /* --- 報告表格 --- */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .report-table th, .report-table td {
+            border: 1px solid var(--border-color);
+            padding: 6px 4px;
+            text-align: center;
+            width: 35px;
+        }
+
+        .report-table th {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .report-table th:first-child, .report-table td:first-child {
+            width: 100px;
+            text-align: left;
+            padding-left: 8px;
+            font-weight: 500;
+            position: sticky;
+            left: 0;
+            background-color: #f8f9ff;
+            border-right: 2px solid var(--border-color);
+        }
+
+        .report-table th:last-child, .report-table td:last-child {
+            width: 80px;
+            font-weight: bold;
+            position: sticky;
+            right: 0;
+            background-color: #f8f9ff;
+            border-left: 2px solid var(--border-color);
+        }
+
+        /* --- 響應式設計 --- */
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .layout-container {
+                padding: 1rem;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .student-card {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .attendance-toggle {
+                width: 100%;
+            }
+
+            .score-buttons {
+                justify-content: center;
+            }
+
+            .management-form {
+                flex-direction: column;
+            }
+
+            .management-form .form-control {
+                width: 100% !important;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- 頁首 -->
+    <header class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-check-circle logo"></i>
+            點名系統
+        </h1>
+        <nav class="main-actions">
+            <a href="#" id="manage-classes-btn" class="action-link"><i class="fas fa-chalkboard-user"></i> 班級管理</a>
+            <a href="#" id="manage-students-btn" class="action-link"><i class="fas fa-users"></i> 學生管理</a>
+            <a href="#" id="view-report-btn" class="action-link"><i class="fas fa-chart-line"></i> 檢視報告</a>
+        </nav>
+    </header>
+
     <div class="layout-container">
-        <!-- 主要內容區 -->
-        <main class="main-content">
-            <h2 class="page-title">
-                <i class="fas fa-check-circle logo"></i>
-                點名系統
-            </h2>
 
-            <div class="main-actions">
-                <a href="#" id="manage-classes-btn" class="action-link"><i class="fas fa-chalkboard-user"></i> 班級管理</a>
-                <a href="#" id="manage-students-btn" class="action-link"><i class="fas fa-users"></i> 學生管理</a>
-                <a href="#" id="view-report-btn" class="action-link"><i class="fas fa-chart-line"></i> 檢視報告</a>
+        <!-- 選擇班級與日期 -->
+        <div class="card">
+            <div class="controls-grid">
+                <div class="form-group">
+                    <label>選擇班級</label>
+                    <div id="class-buttons-container" class="class-buttons-container">
+                        <div class="loader">載入中...</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="attendance-date">選擇日期</label>
+                    <input type="date" id="attendance-date" class="date-picker">
+                </div>
             </div>
-            
-            <!-- 選擇區塊 -->
-            <section class="card">
-                <div class="controls-grid">
-                    <div class="form-group">
-                        <label>選擇班級</label>
-                        <div id="class-buttons-container" class="class-buttons-container">
-                            <div class="loader">載入中...</div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="attendance-date">選擇日期</label>
-                        <input type="date" id="attendance-date" class="date-picker">
-                    </div>
-                </div>
-            </section>
+        </div>
 
-            <!-- 學生名單區塊 -->
-            <section class="card">
-                <div class="card-header">
-                    <h3 class="card-title">學生名單</h3>
+        <!-- 學生名單 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title-icon"><i class="fas fa-user-graduate"></i></div>
+                <h3 class="card-title">學生名單</h3>
+            </div>
+            <div id="attendance-list-container">
+                <div class="empty-state">
+                    <i class="fas fa-hand-pointer"></i>
+                    請先選擇班級與日期
                 </div>
-                <div id="attendance-list-container">
-                    <div class="empty-state">請先選擇班級與日期</div>
-                </div>
-            </section>
-        </main>
+            </div>
+        </div>
+
     </div>
-    
+
     <!-- 彈窗容器 -->
     <div id="modal-container" class="modal-overlay">
         <div class="modal-content">
@@ -557,13 +709,11 @@
 
 
     <script>
-        // --- Firebase 環境變數 ---
+        // --- Firebase 初始化 ---
         let db;
-        
+
         async function initializeFirebase() {
             try {
-                // **步驟一：更新 Firebase 連線設定**
-                // 將此處的設定換成您自己的 Firebase 專案金鑰
                 const firebaseConfig = {
                     apiKey: "AIzaSyAdgbMNLMdvxKHsheXOrLLDow8N_bwZ5o8",
                     authDomain: "schoolattendencesystem-d6e6a.firebaseapp.com",
@@ -573,7 +723,7 @@
                     appId: "1:852662856414:web:d9127ce4541c9af562304f"
                 };
 
-                if (!firebaseConfig || !firebaseConfig.projectId) {
+                if (!firebaseConfig.projectId) {
                     throw new Error("Firebase 設定無效或不完整。");
                 }
 
@@ -582,10 +732,8 @@
                 db = firebase.firestore();
 
                 await auth.signInAnonymously();
-                console.log("已匿名登入。");
-
                 console.log("Firebase 驗證成功。");
-                return true; 
+                return true;
             } catch (error) {
                 console.error("Firebase 初始化失敗:", error);
                 let userMessage = `<h2>Firebase 連線失敗</h2>`;
@@ -594,18 +742,16 @@
                 } else {
                     userMessage += `<p>無法連接到後端服務，請檢查您的網路連線或設定。</p><p><small>錯誤詳情: ${error.message}</small></p>`;
                 }
-                document.body.innerHTML = `<div style="text-align:center; padding: 40px; color: #c0392b;">${userMessage}</div>`;
-                return false; 
+                document.body.innerHTML = `<div style="text-align:center; padding: 40px; color: #f43f5e;">${userMessage}</div>`;
+                return false;
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            
+        document.addEventListener('DOMContentLoaded', async function () {
+
             const isFirebaseReady = await initializeFirebase();
-            if (!isFirebaseReady) {
-                return; 
-            }
-            
+            if (!isFirebaseReady) return;
+
             // --- DOM 元素 ---
             const dateInput = document.getElementById('attendance-date');
             const listContainer = document.getElementById('attendance-list-container');
@@ -614,110 +760,90 @@
             const modalTitle = document.getElementById('modal-title');
             const modalBody = document.getElementById('modal-body');
             const modalCloseBtn = document.getElementById('modal-close-btn');
-            
+
             // --- 應用程式狀態 ---
             let currentClassId = null;
-            let classesCache = []; 
+            let classesCache = [];
 
             // --- 工具函數 ---
             function getTodayDateString() {
                 const today = new Date();
                 const offset = today.getTimezoneOffset();
-                const localDate = new Date(today.getTime() - (offset*60*1000));
+                const localDate = new Date(today.getTime() - (offset * 60 * 1000));
                 return localDate.toISOString().split('T')[0];
             }
 
-            // [新增] 顯示成功提示
             function showNotification(message, type = 'success', duration = 3000) {
+                const colors = {
+                    success: 'var(--success-color)',
+                    error: 'var(--danger-color)',
+                    info: 'var(--info-color)'
+                };
                 const notification = document.createElement('div');
                 notification.style.cssText = `
                     position: fixed;
                     top: 20px;
                     right: 20px;
-                    padding: 1rem 1.5rem;
-                    background-color: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : '#3b82f6'};
+                    padding: 0.85rem 1.25rem;
+                    background-color: ${colors[type] || colors.info};
                     color: white;
-                    border-radius: var(--border-radius);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    border-radius: 0.6rem;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
                     z-index: 2000;
                     font-weight: 500;
+                    font-size: 0.9rem;
                     animation: slideIn 0.3s ease;
                 `;
                 notification.textContent = message;
                 document.body.appendChild(notification);
-                
+
                 if (duration > 0) {
                     setTimeout(() => {
                         notification.style.animation = 'slideOut 0.3s ease';
                         setTimeout(() => notification.remove(), 300);
                     }, duration);
                 }
-                
+
                 return notification;
             }
-            
-            // [新增] 動畫
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                }
-                @keyframes slideOut {
-                    from {
-                        transform: translateX(0);
-                        opacity: 1;
-                    }
-                    to {
-                        transform: translateX(400px);
-                        opacity: 0;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
+
+            // --- Modal 函數 ---
+            function showModal(title, content) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = content;
+                modalContainer.classList.add('show');
+            }
 
             function hideModal() {
                 modalContainer.classList.remove('show');
             }
-            
-            // --- 自訂確認對話框 ---
+
             function showConfirmationModal(title, message, onConfirm) {
                 const content = `
-                    <p>${message}</p>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                        <button id="confirm-cancel-btn" class="btn">取消</button>
-                        <button id="confirm-ok-btn" class="btn btn-danger">確定</button>
+                    <p style="color: var(--text-muted-color); margin-top: 0;">${message}</p>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button id="confirm-cancel-btn" class="btn btn-ghost">取消</button>
+                        <button id="confirm-ok-btn" class="btn btn-danger">確定刪除</button>
                     </div>
                 `;
                 showModal(title, content);
-
-                // [修改] 確定按鈕只觸發 onConfirm，不自動關閉視窗
                 document.getElementById('confirm-ok-btn').addEventListener('click', onConfirm);
-
                 document.getElementById('confirm-cancel-btn').addEventListener('click', hideModal);
             }
-            
+
             // --- 報告功能 ---
             function showReportModal() {
                 const today = new Date();
                 const currentYear = today.getFullYear();
                 const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
 
-                // [修改] 增加 report-output 的樣式，使其可滾動
                 const content = `
-                    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                        <input type="month" id="report-month" class="date-picker" value="${currentYear}-${currentMonth}">
-                        <button id="generate-report-btn" class="btn btn-primary">產生報告</button>
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+                        <input type="month" id="report-month" class="date-picker" value="${currentYear}-${currentMonth}" style="flex: 1;">
+                        <button id="generate-report-btn" class="btn btn-primary"><i class="fas fa-chart-bar"></i> 產生報告</button>
                     </div>
                     <div id="report-output" style="max-height: 60vh; overflow-y: auto;"></div>`;
                 showModal('全校月度報告', content);
-
                 document.getElementById('generate-report-btn').addEventListener('click', generateFirebaseReport);
             }
 
@@ -741,21 +867,17 @@
                         db.collection('students').orderBy('order').get(),
                         db.collection('records').where('date', '>=', startDate).where('date', '<=', endDate).get()
                     ]);
-                    
-                    // [修復] 建立學生 ID -> 姓名/排序 的查找表
+
                     const studentMap = new Map(studentsSnap.docs.map(doc => [doc.id, doc.data()]));
-                    // [修復] 保留原始班級列表，用於決定報告中班級的顯示順序
                     const allDbClasses = classesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                    // [修復] 建立基於 "記錄" 的資料結構
-                    // 結構: { classId: { studentId: { date: {status, score} } } }
                     const reportData = {};
                     recordsSnap.forEach(doc => {
                         const data = doc.data();
                         const { classId, studentId, date, status, score } = data;
-                        if (!classId || !studentId || !date) return; // 略過無效記錄
-                        if (!reportData[classId]) { reportData[classId] = {}; }
-                        if (!reportData[classId][studentId]) { reportData[classId][studentId] = {}; }
+                        if (!classId || !studentId || !date) return;
+                        if (!reportData[classId]) reportData[classId] = {};
+                        if (!reportData[classId][studentId]) reportData[classId][studentId] = {};
                         reportData[classId][studentId][date] = { status, score };
                     });
 
@@ -764,42 +886,38 @@
                         return;
                     }
 
-                    let finalHtml = '';
                     let grandTotalAttendance = 0;
                     let grandTotalScore = 0;
                     const excelAttendanceData = {};
                     const excelScoreData = {};
-
                     let attendanceHtml = '<h2>出席報告</h2>';
                     let scoreHtml = '<h2 style="margin-top: 2.5rem;">得分報告</h2>';
 
-                    allDbClasses.forEach(cls => {
-                        // [修復] 學生名單來源改為 reportData，而不是 allDbStudents
-                        const studentsDataForClass = reportData[cls.id]; // 取得此班級本月有記錄的學生資料
+                    // 欄位字母預先計算（在外層避免重複計算）
+                    const firstDataCol = 'B';
 
-                        // 如果這個班級在本月沒有任何記錄，則跳過
+                    allDbClasses.forEach(cls => {
+                        const studentsDataForClass = reportData[cls.id];
                         if (!studentsDataForClass || Object.keys(studentsDataForClass).length === 0) return;
 
                         const studentIdsInClass = Object.keys(studentsDataForClass);
-                        
-                        // 根據 studentMap (最新的學生資料) 取得學生姓名和排序
                         const studentsInClass = studentIdsInClass.map(studentId => {
                             const studentInfo = studentMap.get(studentId);
                             return {
                                 id: studentId,
-                                name: studentInfo ? studentInfo.name : `(已刪除學生 ID: ${studentId.substring(0, 5)})`, // 處理已刪除的學生
-                                order: studentInfo ? studentInfo.order : 999 // 已刪除的學生排最後
+                                name: studentInfo ? studentInfo.name : `(已刪除學生 ID: ${studentId.substring(0, 5)})`,
+                                order: studentInfo ? studentInfo.order : 999
                             };
-                        }).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)); // 排序
+                        }).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
 
                         if (studentsInClass.length === 0) return;
 
+                        const lastDataCol = XLSX.utils.encode_col(lastDay);
                         const attSheetData = [];
                         const scoreSheetData = [];
 
                         let attTableHtml = `<h3 style="margin-top: 24px; margin-bottom: 12px; text-align: center;">${cls.name} - 出席報告</h3>`;
                         attTableHtml += `<table class="report-table">`;
-
                         let scoreTableHtml = `<h3 style="margin-top: 24px; margin-bottom: 12px; text-align: center;">${cls.name} - 得分報告</h3>`;
                         scoreTableHtml += `<table class="report-table">`;
 
@@ -809,10 +927,10 @@
                         let scoreExcelHeader = ['學生姓名'];
 
                         for (let day = 1; day <= lastDay; day++) {
-                           attHeader += `<th>${day}</th>`;
-                           attExcelHeader.push(String(day));
-                           scoreHeader += `<th>${day}</th>`;
-                           scoreExcelHeader.push(String(day));
+                            attHeader += `<th>${day}</th>`;
+                            attExcelHeader.push(String(day));
+                            scoreHeader += `<th>${day}</th>`;
+                            scoreExcelHeader.push(String(day));
                         }
                         attHeader += '<th>出席總計</th></tr></thead>';
                         attExcelHeader.push('出席總計');
@@ -828,108 +946,92 @@
                         let attTableBody = '<tbody>';
                         let scoreTableBody = '<tbody>';
 
-                        // HTML 總計用
                         const dailyTotals = Array(lastDay + 1).fill(0);
                         const dailyScoreTotals = Array(lastDay + 1).fill(0);
                         let classTotal = 0;
                         let classScoreTotal = 0;
 
-                        // --- 學生資料列 ---
                         studentsInClass.forEach((student, i) => {
-                           const rowIndex = i + 2; // Excel row index (1-based header, data starts at 2)
-                           let attRow = `<tr><td>${student.name}</td>`;
-                           let scoreRow = `<tr><td>${student.name}</td>`;
-
-                           let studentTotal = 0; // HTML 總計用
-                           let studentScoreTotal = 0; // HTML 總計用
-                           let attExcelRow = [student.name];
-                           let scoreExcelRow = [student.name];
-
-                           // [修改] Excel 公式用欄位
-                            const firstDataCol = 'B'; // Column B
-                            const lastDataCol = XLSX.utils.encode_col(lastDay); // e.g., 31 -> 'AE' (index 30)
+                            const rowIndex = i + 2;
+                            let attRow = `<tr><td>${student.name}</td>`;
+                            let scoreRow = `<tr><td>${student.name}</td>`;
+                            let studentTotal = 0;
+                            let studentScoreTotal = 0;
+                            let attExcelRow = [student.name];
+                            let scoreExcelRow = [student.name];
 
                             for (let day = 1; day <= lastDay; day++) {
                                 const dateStr = `${monthInput}-${String(day).padStart(2, '0')}`;
-                                // [修復] 從新的 reportData 結構中取得當天的記錄
                                 const record = studentsDataForClass[student.id][dateStr];
-                                
-                               let attCellContent = '';
-                               let scoreCellContent = '';
-                               let scoreValue = null; // [修改] Excel 得分用 (數字 or null)
+
+                                let attCellContent = '';
+                                let scoreCellContent = '';
+                                let scoreValue = null;
 
                                 if (record && record.status === 'present') {
-                                   attCellContent = '✓'; 
-                                   studentTotal++;
-                                   dailyTotals[day]++;
-                                    
-                                   if (typeof record.score === 'number') {
-                                       scoreCellContent = String(record.score);
-                                       scoreValue = record.score; // [修改]
-                                       studentScoreTotal += record.score;
-                                       dailyScoreTotals[day] += record.score;
+                                    attCellContent = '✓';
+                                    studentTotal++;
+                                    dailyTotals[day]++;
+
+                                    if (typeof record.score === 'number') {
+                                        scoreCellContent = String(record.score);
+                                        scoreValue = record.score;
+                                        studentScoreTotal += record.score;
+                                        dailyScoreTotals[day] += record.score;
                                     }
                                 }
-                               attRow += `<td>${attCellContent}</td>`;
-                               attExcelRow.push(attCellContent);
-                               scoreRow += `<td>${scoreCellContent}</td>`;
-                               scoreExcelRow.push(scoreValue); // [修改]
+                                attRow += `<td>${attCellContent}</td>`;
+                                attExcelRow.push(attCellContent);
+                                scoreRow += `<td>${scoreCellContent}</td>`;
+                                scoreExcelRow.push(scoreValue);
                             }
-                            
-                           // HTML Row Totals
-                           attRow += `<td>${studentTotal}</td></tr>`;
-                           scoreRow += `<td>${studentScoreTotal}</td></tr>`;
 
-                           // [修改] Excel Row Totals (Formulas)
-                           attExcelRow.push({ f: `COUNTIF(${firstDataCol}${rowIndex}:${lastDataCol}${rowIndex},"✓")` });
-                           scoreExcelRow.push({ f: `SUM(${firstDataCol}${rowIndex}:${lastDataCol}${rowIndex})` });
-                           
-                           attSheetData.push(attExcelRow);
-                           attTableBody += attRow;
-                           scoreSheetData.push(scoreExcelRow);
-                           scoreTableBody += scoreRow;
+                            attRow += `<td>${studentTotal}</td></tr>`;
+                            scoreRow += `<td>${studentScoreTotal}</td></tr>`;
 
-                           classTotal += studentTotal;
-                           classScoreTotal += studentScoreTotal;
+                            attExcelRow.push({ f: `COUNTIF(${firstDataCol}${rowIndex}:${lastDataCol}${rowIndex},"✓")` });
+                            scoreExcelRow.push({ f: `SUM(${firstDataCol}${rowIndex}:${lastDataCol}${rowIndex})` });
+
+                            attSheetData.push(attExcelRow);
+                            attTableBody += attRow;
+                            scoreSheetData.push(scoreExcelRow);
+                            scoreTableBody += scoreRow;
+
+                            classTotal += studentTotal;
+                            classScoreTotal += studentScoreTotal;
                         });
 
-                        // --- 總計列 ---
-                        const totalRowIndex = studentsInClass.length + 2; // Row after last student
+                        const totalRowIndex = studentsInClass.length + 2;
                         const firstDataRow = 2;
                         const lastDataRow = totalRowIndex - 1;
+                        const totalColName = XLSX.utils.encode_col(lastDay + 1);
 
-                        // --- Attendance Total Row (HTML) ---
-                        attTableBody += '<tr style="font-weight: bold; background-color: #f8f9fa;"><td>當日出席總計</td>';
+                        // 出席總計列 (HTML)
+                        attTableBody += '<tr style="font-weight: bold; background-color: #eef2ff;"><td>當日出席總計</td>';
                         for (let day = 1; day <= lastDay; day++) {
-                           attTableBody += `<td>${dailyTotals[day]}</td>`;
+                            attTableBody += `<td>${dailyTotals[day]}</td>`;
                         }
-                        attTableBody += `<td>${classTotal}</td></tr>`;
-                        attTableBody += '</tbody>';
-                        attTableHtml += attTableBody;
-                        attTableHtml += '</table>';
+                        attTableBody += `<td>${classTotal}</td></tr></tbody>`;
+                        attTableHtml += attTableBody + '</table>';
 
-                        // [修改] Attendance Total Row (Excel Formula) ---
+                        // 出席總計列 (Excel)
                         let attExcelTotalRow = ['當日出席總計'];
                         for (let day = 1; day <= lastDay; day++) {
                             const colName = XLSX.utils.encode_col(day);
                             attExcelTotalRow.push({ f: `COUNTIF(${colName}${firstDataRow}:${colName}${lastDataRow},"✓")` });
                         }
-                        const totalColName = XLSX.utils.encode_col(lastDay + 1);
                         attExcelTotalRow.push({ f: `SUM(${totalColName}${firstDataRow}:${totalColName}${lastDataRow})` });
                         attSheetData.push(attExcelTotalRow);
 
-
-                        // --- Score Total Row (HTML) ---
-                        scoreTableBody += '<tr style="font-weight: bold; background-color: #f8f9fa;"><td>當日得分總計</td>';
+                        // 得分總計列 (HTML)
+                        scoreTableBody += '<tr style="font-weight: bold; background-color: #eef2ff;"><td>當日得分總計</td>';
                         for (let day = 1; day <= lastDay; day++) {
-                           scoreTableBody += `<td>${dailyScoreTotals[day]}</td>`;
+                            scoreTableBody += `<td>${dailyScoreTotals[day]}</td>`;
                         }
-                        scoreTableBody += `<td>${classScoreTotal}</td></tr>`;
-                        scoreTableBody += '</tbody>';
-                        scoreTableHtml += scoreTableBody;
-                        scoreTableHtml += '</table>';
-                        
-                        // [修改] Score Total Row (Excel Formula) ---
+                        scoreTableBody += `<td>${classScoreTotal}</td></tr></tbody>`;
+                        scoreTableHtml += scoreTableBody + '</table>';
+
+                        // 得分總計列 (Excel)
                         let scoreExcelTotalRow = ['當日得分總計'];
                         for (let day = 1; day <= lastDay; day++) {
                             const colName = XLSX.utils.encode_col(day);
@@ -938,30 +1040,27 @@
                         scoreExcelTotalRow.push({ f: `SUM(${totalColName}${firstDataRow}:${totalColName}${lastDataRow})` });
                         scoreSheetData.push(scoreExcelTotalRow);
 
-
                         excelAttendanceData[cls.name] = attSheetData;
                         excelScoreData[cls.name] = scoreSheetData;
                         attendanceHtml += attTableHtml;
                         scoreHtml += scoreTableHtml;
 
                         grandTotalAttendance += classTotal;
-                        grandTotalScore += classScoreTotal; 
+                        grandTotalScore += classScoreTotal;
                     });
 
-                     finalHtml = attendanceHtml + scoreHtml;
-
-                     if (grandTotalAttendance === 0 && grandTotalScore === 0) {
+                    if (grandTotalAttendance === 0 && grandTotalScore === 0) {
                         reportOutput.innerHTML = `<div class="empty-state"><i class="fas fa-file-alt"></i><p>該月份沒有任何記錄。</p></div>`;
                     } else {
                         const summary = `
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 0;">
-                                <div style="font-size: 1.1em; font-weight: 500; margin: 0;">
-                                     <strong>全校總出席:</strong> ${grandTotalAttendance} / 
-                                     <strong>總得分:</strong> ${grandTotalScore}
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 0 16px;">
+                                <div style="font-size: 0.95rem; font-weight: 600;">
+                                    全校總出席: <span style="color: var(--success-color);">${grandTotalAttendance}</span> &nbsp;|&nbsp;
+                                    總得分: <span style="color: var(--primary-color);">${grandTotalScore}</span>
                                 </div>
                                 <button id="export-excel-btn" class="btn btn-success"><i class="fas fa-file-excel"></i> 匯出 Excel</button>
                             </div>`;
-                        reportOutput.innerHTML = summary + finalHtml;
+                        reportOutput.innerHTML = summary + attendanceHtml + scoreHtml;
                         document.getElementById('export-excel-btn').addEventListener('click', () => exportReportToExcel(excelAttendanceData, excelScoreData));
                     }
 
@@ -970,31 +1069,31 @@
                     reportOutput.innerHTML = `<div class="empty-state"><p style="color:var(--danger-color);">報告產生失敗，請檢查網絡連線或稍後再試。</p></div>`;
                 }
             }
-            
+
             function exportReportToExcel(attendanceData, scoreData) {
-                 if ((!attendanceData || Object.keys(attendanceData).length === 0) && (!scoreData || Object.keys(scoreData).length === 0)) {
-                     alert('沒有報告資料可匯出'); 
-                     return; 
-                 }
-                 if (typeof XLSX === 'undefined') { alert('Excel 匯出功能載入失敗，請檢查您的網路連線或重新整理頁面。'); return; }
+                if ((!attendanceData || Object.keys(attendanceData).length === 0) && (!scoreData || Object.keys(scoreData).length === 0)) {
+                    alert('沒有報告資料可匯出');
+                    return;
+                }
+                if (typeof XLSX === 'undefined') {
+                    alert('Excel 匯出功能載入失敗，請檢查您的網路連線或重新整理頁面。');
+                    return;
+                }
 
                 const wb = XLSX.utils.book_new();
-                
-                // 處理出席報告
+
                 for (const className in attendanceData) {
-                    if (attendanceData.hasOwnProperty(className)) {
+                    if (Object.prototype.hasOwnProperty.call(attendanceData, className)) {
                         const sheetData = attendanceData[className];
                         const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                        // [修改] 最後一欄寬度
                         const cols = [{ wch: 20 }, ...Array(sheetData[0].length - 2).fill({ wch: 4 }), { wch: 12 }];
                         ws['!cols'] = cols;
                         XLSX.utils.book_append_sheet(wb, ws, `${className.substring(0, 20)} - 出席報告`);
                     }
                 }
 
-                // 處理得分報告
                 for (const className in scoreData) {
-                    if (scoreData.hasOwnProperty(className)) {
+                    if (Object.prototype.hasOwnProperty.call(scoreData, className)) {
                         const sheetData = scoreData[className];
                         const ws = XLSX.utils.aoa_to_sheet(sheetData);
                         const cols = [{ wch: 20 }, ...Array(sheetData[0].length - 2).fill({ wch: 4 }), { wch: 12 }];
@@ -1022,16 +1121,15 @@
 
                     classesCache.forEach(cls => {
                         const button = document.createElement('button');
-                        button.className = 'btn class-btn';
+                        button.className = 'class-btn';
                         button.textContent = cls.name;
                         button.dataset.classId = cls.id;
                         button.addEventListener('click', handleClassButtonClick);
                         classButtonsContainer.appendChild(button);
                     });
-                    
-                    if(classButtonsContainer.querySelector('.class-btn')) {
-                        classButtonsContainer.querySelector('.class-btn').click();
-                    }
+
+                    const firstBtn = classButtonsContainer.querySelector('.class-btn');
+                    if (firstBtn) firstBtn.click();
 
                 } catch (error) {
                     console.error("Error loading classes: ", error);
@@ -1039,12 +1137,12 @@
                     if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
                         errorMessage = `<p style="font-weight: bold;">權限不足</p><p>無法讀取班級資料。請檢查您的 Firestore 安全性規則。</p>`;
                     } else if (error.code === 'failed-precondition') {
-                         errorMessage = `<p style="font-weight: bold;">缺少索引</p><p>請打開瀏覽器的開發者工具 (按 F12)，在 Console (主控台) 中找到 Firebase 錯誤訊息，裡面會包含一個<b>建立索引的連結</b>。點擊該連結即可解決。</p>`;
+                        errorMessage = `<p style="font-weight: bold;">缺少索引</p><p>請打開瀏覽器的開發者工具 (按 F12)，在 Console 中找到 Firebase 錯誤訊息，裡面會包含一個<b>建立索引的連結</b>。點擊該連結即可解決。</p>`;
                     }
                     classButtonsContainer.innerHTML = `<div class="empty-state" style="padding: 1rem; color:var(--danger-color); text-align: left;">${errorMessage}</div>`;
                 }
             }
-            
+
             function handleClassButtonClick(event) {
                 const clickedButton = event.currentTarget;
                 currentClassId = clickedButton.dataset.classId;
@@ -1055,13 +1153,22 @@
 
             async function loadStudentData() {
                 const selectedDate = dateInput.value;
-                if (!currentClassId) { listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-chalkboard"></i><p>請先選擇一個班級。</p></div>`; return; }
-                if (!selectedDate) { listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>請選擇點名日期。</p></div>`; return; }
-                
+                if (!currentClassId) {
+                    listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-chalkboard"></i><p>請先選擇一個班級。</p></div>`;
+                    return;
+                }
+                if (!selectedDate) {
+                    listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>請選擇點名日期。</p></div>`;
+                    return;
+                }
+
                 listContainer.innerHTML = '<div class="loader">載入中...</div>';
 
                 try {
-                    const studentsSnap = await db.collection('students').where('classId', '==', currentClassId).orderBy('order').get();
+                    const studentsSnap = await db.collection('students')
+                        .where('classId', '==', currentClassId)
+                        .orderBy('order')
+                        .get();
                     const studentsInClass = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
                     if (studentsInClass.length === 0) {
@@ -1070,11 +1177,6 @@
                     }
 
                     const studentIds = studentsInClass.map(s => s.id);
-                    if (studentIds.length === 0) {
-                         renderStudentList(studentsInClass, {});
-                         return;
-                    }
-                    
                     const recordsSnap = await db.collection('records')
                         .where('date', '==', selectedDate)
                         .where('studentId', 'in', studentIds)
@@ -1085,16 +1187,16 @@
                         const data = doc.data();
                         recordsMap[data.studentId] = data;
                     });
-                    
+
                     renderStudentList(studentsInClass, recordsMap);
 
                 } catch (error) {
                     console.error("Error loading students or records: ", error);
                     let errorMessage = `<p>學生資料加載失敗，請檢查網絡連線。</p>`;
                     if (error.code === 'failed-precondition') {
-                         errorMessage = `<p style="font-weight: bold;">缺少索引 (學生資料)</p><p>Firestore 需要一個複合索引才能查詢此班級的學生。請打開瀏覽器的開發者工具 (按 F12)，在 Console (主控台) 的錯誤訊息中找到並點擊 Firebase 提供的<b>索引建立連結</b>。</p>`;
+                        errorMessage = `<p style="font-weight: bold;">缺少索引 (學生資料)</p><p>Firestore 需要一個複合索引。請打開瀏覽器的開發者工具 (按 F12)，在 Console 的錯誤訊息中找到並點擊 Firebase 提供的<b>索引建立連結</b>。</p>`;
                     } else if (error.code === 'permission-denied') {
-                         errorMessage = `<p style="font-weight: bold;">權限不足</p><p>無法讀取學生資料。請檢查您的 Firestore 安全性規則。</p>`;
+                        errorMessage = `<p style="font-weight: bold;">權限不足</p><p>無法讀取學生資料。請檢查您的 Firestore 安全性規則。</p>`;
                     }
                     listContainer.innerHTML = `<div class="empty-state" style="color:var(--danger-color); text-align: left;">${errorMessage}</div>`;
                 }
@@ -1103,7 +1205,7 @@
             function renderStudentList(students, recordsMap) {
                 listContainer.innerHTML = '<div class="student-list"></div>';
                 const studentListElement = listContainer.querySelector('.student-list');
-                
+
                 students.forEach(student => {
                     const record = recordsMap[student.id] || {};
                     const status = record.status || 'unknown';
@@ -1126,8 +1228,8 @@
                     studentListElement.appendChild(item);
                 });
 
-                listContainer.querySelectorAll('.toggle-btn').forEach(button => button.addEventListener('click', handleAttendanceClick));
-                listContainer.querySelectorAll('.score-btn').forEach(button => button.addEventListener('click', handleScoreClick));
+                listContainer.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', handleAttendanceClick));
+                listContainer.querySelectorAll('.score-btn').forEach(btn => btn.addEventListener('click', handleScoreClick));
             }
 
             async function handleAttendanceClick(event) {
@@ -1135,10 +1237,8 @@
                 const { studentId, status } = button.dataset;
                 const selectedDate = dateInput.value;
                 const recordKey = `${selectedDate}_${studentId}`;
-
                 const parent = button.parentElement;
 
-                // 如果按鈕已經是啟用狀態，則取消選擇
                 if (button.classList.contains('active')) {
                     button.classList.remove('active');
                     try {
@@ -1155,7 +1255,7 @@
 
                 parent.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                
+
                 try {
                     const statusText = status === 'present' ? '出席' : '缺席';
                     await db.collection('records').doc(recordKey).set({
@@ -1178,9 +1278,8 @@
                 const score = parseInt(button.dataset.score, 10);
                 const selectedDate = dateInput.value;
                 const recordKey = `${selectedDate}_${studentId}`;
-
                 const parent = button.parentElement;
-                
+
                 if (button.classList.contains('active')) {
                     button.classList.remove('active');
                     try {
@@ -1210,10 +1309,8 @@
                     }
                 }
             }
-            
-            // --- 管理功能 ---
 
-            // [新增] 顯示編輯班級的彈窗
+            // --- 管理功能 ---
             function showEditClassModal(id, currentName, currentOrder) {
                 const content = `
                     <div class="form-group">
@@ -1224,31 +1321,26 @@
                         <label for="edit-class-order">排序</label>
                         <input type="number" id="edit-class-order" class="form-control" value="${currentOrder}" required>
                     </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                        <button id="save-edit-class-btn" class="btn btn-primary">儲存</button>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button id="save-edit-class-btn" class="btn btn-primary"><i class="fas fa-save"></i> 儲存</button>
                     </div>
                 `;
                 showModal('編輯班級', content);
 
                 document.getElementById('save-edit-class-btn').addEventListener('click', async () => {
                     const newName = document.getElementById('edit-class-name').value.trim();
-                    const newOrderInput = document.getElementById('edit-class-order').value; // [修復] 先取字串
+                    const newOrderInput = document.getElementById('edit-class-order').value;
                     const newOrder = parseInt(newOrderInput, 10);
-                    
-                    // [修復] 檢查 newOrder 是否為有效數字
+
                     if (!newName || newOrderInput.trim() === '' || isNaN(newOrder)) {
                         alert('班級名稱和排序（必須是數字）為必填項。');
-                        return; // 終止執行
+                        return;
                     }
 
                     try {
-                        await db.collection('classes').doc(id).update({
-                            name: newName,
-                            order: newOrder
-                        });
-                        // await renderClassManagementList(); // [修復] 移除此行，因為 'class-management-list' 此時不在 DOM 中
-                        await loadClasses(); // 刷新主頁按鈕
-                        hideModal(); // 關閉編輯視窗
+                        await db.collection('classes').doc(id).update({ name: newName, order: newOrder });
+                        await loadClasses();
+                        hideModal();
                     } catch (error) {
                         console.error("Error updating class:", error);
                         alert('儲存失敗，請檢查主控台錯誤。');
@@ -1257,34 +1349,35 @@
             }
 
             async function showClassManagementModal() {
-                // [修改] 增加列表高度
-                const content = `<div id="class-management-list" style="max-height: 450px; overflow-y: auto; margin-bottom: 1rem;"></div>
-                                 <form id="add-class-form" class="management-form">
-                                     <input type="text" id="new-class-name" class="form-control" placeholder="新班級名稱" required style="flex-grow: 1;">
-                                     <input type="number" id="new-class-order" class="form-control" placeholder="排序" value="0" required style="width: 100px;">
-                                     <button type="submit" class="btn btn-primary">新增</button>
-                                 </form>`;
+                const content = `
+                    <div id="class-management-list" style="max-height: 420px; overflow-y: auto; margin-bottom: 0;"></div>
+                    <form id="add-class-form" class="management-form">
+                        <input type="text" id="new-class-name" class="form-control" placeholder="新班級名稱" required style="flex-grow: 1;">
+                        <input type="number" id="new-class-order" class="form-control" placeholder="排序" value="0" required style="width: 90px;">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> 新增</button>
+                    </form>`;
                 showModal('班級管理', content);
                 await renderClassManagementList();
+
                 document.getElementById('add-class-form').addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const nameInput = document.getElementById('new-class-name');
                     const orderInput = document.getElementById('new-class-order');
                     const name = nameInput.value.trim();
                     const order = parseInt(orderInput.value, 10);
-                    
-                    // [修復] 檢查 order 是否為有效數字
+
                     if (name && !isNaN(order)) {
                         try {
                             await db.collection('classes').add({ name, order });
                             nameInput.value = '';
                             orderInput.value = 0;
                             await renderClassManagementList();
-                            await loadClasses(); 
-                            // 新增後捲動到底部
+                            await loadClasses();
                             const listEl = document.getElementById('class-management-list');
-                            listEl.scrollTop = listEl.scrollHeight;
-                        } catch (error) { console.error("Error adding class:", error); }
+                            if (listEl) listEl.scrollTop = listEl.scrollHeight;
+                        } catch (error) {
+                            console.error("Error adding class:", error);
+                        }
                     } else {
                         alert('請輸入有效的班級名稱和排序數字。');
                     }
@@ -1299,43 +1392,39 @@
                     listEl.innerHTML = '';
                     if (classSnap.empty) {
                         listEl.innerHTML = `<div class="empty-state">尚未建立任何班級。</div>`;
+                        return;
                     }
                     classSnap.docs.forEach(doc => {
                         const cls = { id: doc.id, ...doc.data() };
                         const item = document.createElement('div');
                         item.className = 'management-list-item';
-                        // [修改] 增加 編輯按鈕 和 class
-                        item.innerHTML = `<span class="management-list-item-name">${cls.name} (排序: ${cls.order})</span>
-                                        <div class="management-list-item-actions">
-                                            <button class="btn btn-primary btn-sm edit-class-btn" data-id="${cls.id}" data-name="${cls.name}" data-order="${cls.order}"><i class="fas fa-edit"></i></button>
-                                            <button class="btn btn-danger btn-sm" data-id="${cls.id}" data-name="${cls.name}"><i class="fas fa-trash"></i></button>
-                                        </div>`;
-                        
-                        // [新增] 編輯按鈕事件
+                        item.innerHTML = `
+                            <span class="management-list-item-name">${cls.name} <span style="color: var(--text-muted-color); font-size: 0.8rem;">(排序: ${cls.order})</span></span>
+                            <div class="management-list-item-actions">
+                                <button class="btn btn-primary btn-sm edit-class-btn" data-id="${cls.id}" data-name="${cls.name}" data-order="${cls.order}"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-sm delete-class-btn" data-id="${cls.id}" data-name="${cls.name}"><i class="fas fa-trash"></i></button>
+                            </div>`;
+
                         item.querySelector('.edit-class-btn').addEventListener('click', (e) => {
                             const { id, name, order } = e.currentTarget.dataset;
                             showEditClassModal(id, name, order);
                         });
 
-                        item.querySelector('.btn-danger').addEventListener('click', (e) => {
+                        item.querySelector('.delete-class-btn').addEventListener('click', (e) => {
                             const { id, name } = e.currentTarget.dataset;
-                            // [修改] 刪除後保持捲動位置
-                            showConfirmationModal('刪除班級', `確定要刪除班級 "${name}" 嗎？此操作無法復原。`, async () => {
-                                // const listEl = document.getElementById('class-management-list'); // [修復] 移除，此元素在確認彈窗中不存在
-                                // const scrollTop = listEl.scrollTop; // [修復] 移除
+                            showConfirmationModal('刪除班級', `確定要刪除班級「${name}」嗎？此操作無法復原。`, async () => {
                                 try {
                                     await db.collection('classes').doc(id).delete();
-                                    // await renderClassManagementList(); // [修復] 移除，列表會在下次打開時重建
-                                    await loadClasses(); // [保留] 更新主頁面的班級按鈕
-                                    // document.getElementById('class-management-list').scrollTop = scrollTop; // [修復] 移除
-                                    hideModal(); // [修復] 刪除成功後關閉彈窗
-                                } catch (error) { 
-                                    console.error("Error deleting class:", error); 
+                                    await loadClasses();
+                                    hideModal();
+                                } catch (error) {
+                                    console.error("Error deleting class:", error);
                                     alert('刪除失敗。');
-                                    hideModal(); // [修復] 發生錯誤也關閉彈窗
+                                    hideModal();
                                 }
                             });
                         });
+
                         listEl.appendChild(item);
                     });
                 } catch (error) {
@@ -1343,13 +1432,12 @@
                     listEl.innerHTML = `<div class="empty-state" style="color:var(--danger-color);">無法載入班級列表。</div>`;
                 }
             }
-            
-            // [新增] 顯示編輯學生的彈窗
+
             function showEditStudentModal(id, currentName, currentClassId, currentOrder) {
-                let options = classesCache.map(c => 
+                let options = classesCache.map(c =>
                     `<option value="${c.id}" ${c.id === currentClassId ? 'selected' : ''}>${c.name}</option>`
                 ).join('');
-                
+
                 const content = `
                     <div class="form-group">
                         <label for="edit-student-name">學生姓名</label>
@@ -1363,8 +1451,8 @@
                         <label for="edit-student-order">排序</label>
                         <input type="number" id="edit-student-order" class="form-control" value="${currentOrder}" required>
                     </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                        <button id="save-edit-student-btn" class="btn btn-primary">儲存</button>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button id="save-edit-student-btn" class="btn btn-primary"><i class="fas fa-save"></i> 儲存</button>
                     </div>
                 `;
                 showModal('編輯學生', content);
@@ -1372,13 +1460,12 @@
                 document.getElementById('save-edit-student-btn').addEventListener('click', async () => {
                     const newName = document.getElementById('edit-student-name').value.trim();
                     const newClassId = document.getElementById('edit-student-class').value;
-                    const newOrderInput = document.getElementById('edit-student-order').value; // [修復] 先取字串
+                    const newOrderInput = document.getElementById('edit-student-order').value;
                     const newOrder = parseInt(newOrderInput, 10);
-                    
-                    // [修復] 檢查 newOrder 是否為有效數字
+
                     if (!newName || !newClassId || newOrderInput.trim() === '' || isNaN(newOrder)) {
                         alert('學生姓名、班級和排序（必須是數字）為必填項。');
-                        return; // 終止執行
+                        return;
                     }
 
                     try {
@@ -1387,9 +1474,8 @@
                             classId: newClassId,
                             order: newOrder
                         });
-                        // await renderStudentManagementList(); // [修復] 移除此行，因為 'student-management-list' 此時不在 DOM 中
-                        await loadStudentData(); // 刷新主頁列表
-                        hideModal(); // 關閉編輯視窗
+                        await loadStudentData();
+                        hideModal();
                     } catch (error) {
                         console.error("Error updating student:", error);
                         alert('儲存失敗，請檢查主控台錯誤。');
@@ -1398,96 +1484,93 @@
             }
 
             async function showStudentManagementModal() {
-                 if(classesCache.length === 0) {
-                    showModal('學生管理', '<div class="empty-state"><p>請先在「班級管理」中建立至少一個班級，然後才能新增學生。</p></div>');
+                if (classesCache.length === 0) {
+                    showModal('學生管理', '<div class="empty-state"><i class="fas fa-chalkboard"></i><p>請先在「班級管理」中建立至少一個班級，然後才能新增學生。</p></div>');
                     return;
                 }
                 let options = classesCache.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                // [修改] 增加列表高度
-                const content = `<div id="student-management-list" style="max-height: 450px; overflow-y: auto; margin-bottom: 1rem;"></div>
-                                 <form id="add-student-form" class="management-form" style="flex-wrap: nowrap;">
-                                     <input type="text" id="new-student-name" class="form-control" placeholder="新學生姓名" required style="flex-grow: 1;">
-                                     <select id="new-student-class" class="form-control" style="width: 150px;">${options}</select>
-                                     <input type="number" id="new-student-order" class="form-control" placeholder="排序" value="0" required style="width: 100px;">
-                                     <button type="submit" class="btn btn-primary">新增</button>
-                                 </form>`;
+                const content = `
+                    <div id="student-management-list" style="max-height: 420px; overflow-y: auto; margin-bottom: 0;"></div>
+                    <form id="add-student-form" class="management-form">
+                        <input type="text" id="new-student-name" class="form-control" placeholder="新學生姓名" required style="flex-grow: 1; min-width: 120px;">
+                        <select id="new-student-class" class="form-control" style="width: 140px;">${options}</select>
+                        <input type="number" id="new-student-order" class="form-control" placeholder="排序" value="0" required style="width: 80px;">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> 新增</button>
+                    </form>`;
                 showModal('學生管理', content);
                 await renderStudentManagementList();
-                 document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+
+                document.getElementById('add-student-form').addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const nameInput = document.getElementById('new-student-name');
                     const classId = document.getElementById('new-student-class').value;
                     const orderInput = document.getElementById('new-student-order');
                     const name = nameInput.value.trim();
                     const order = parseInt(orderInput.value, 10);
-                    
-                    // [修復] 檢查 order 是否為有效數字
+
                     if (name && classId && !isNaN(order)) {
                         try {
                             await db.collection('students').add({ name, classId, order });
                             nameInput.value = '';
                             orderInput.value = 0;
                             await renderStudentManagementList();
-                            await loadStudentData(); 
-                             // 新增後捲動到底部
+                            await loadStudentData();
                             const listEl = document.getElementById('student-management-list');
-                            listEl.scrollTop = listEl.scrollHeight;
-                        } catch (error) { console.error("Error adding student:", error); }
+                            if (listEl) listEl.scrollTop = listEl.scrollHeight;
+                        } catch (error) {
+                            console.error("Error adding student:", error);
+                        }
                     } else {
                         alert('請輸入有效的學生姓名、班級和排序數字。');
                     }
                 });
             }
 
-             async function renderStudentManagementList() {
+            async function renderStudentManagementList() {
                 const listEl = document.getElementById('student-management-list');
                 listEl.innerHTML = '<div class="loader">載入中...</div>';
                 try {
                     const studentsSnap = await db.collection('students').orderBy('order').get();
                     listEl.innerHTML = '';
-                     if (studentsSnap.empty) {
+                    if (studentsSnap.empty) {
                         listEl.innerHTML = `<div class="empty-state">尚未建立任何學生。</div>`;
+                        return;
                     }
                     studentsSnap.docs.forEach(doc => {
                         const student = { id: doc.id, ...doc.data() };
                         const className = classesCache.find(c => c.id === student.classId)?.name || '未知班級';
                         const item = document.createElement('div');
                         item.className = 'management-list-item';
-                        // [修改] 增加 編輯按鈕 和 class
-                        item.innerHTML = `<span class="management-list-item-name">${student.name} (${className} / 排序: ${student.order})</span>
-                                        <div class="management-list-item-actions">
-                                            <button class="btn btn-primary btn-sm edit-student-btn" data-id="${student.id}" data-name="${student.name}" data-class-id="${student.classId}" data-order="${student.order}"><i class="fas fa-edit"></i></button>
-                                            <button class="btn btn-danger btn-sm" data-id="${student.id}" data-name="${student.name}"><i class="fas fa-trash"></i></button>
-                                        </div>`;
-                        
-                        // [新增] 編輯按鈕事件
+                        item.innerHTML = `
+                            <span class="management-list-item-name">${student.name} <span style="color: var(--text-muted-color); font-size: 0.8rem;">(${className} / 排序: ${student.order})</span></span>
+                            <div class="management-list-item-actions">
+                                <button class="btn btn-primary btn-sm edit-student-btn" data-id="${student.id}" data-name="${student.name}" data-class-id="${student.classId}" data-order="${student.order}"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-sm delete-student-btn" data-id="${student.id}" data-name="${student.name}"><i class="fas fa-trash"></i></button>
+                            </div>`;
+
                         item.querySelector('.edit-student-btn').addEventListener('click', (e) => {
                             const { id, name, classId, order } = e.currentTarget.dataset;
                             showEditStudentModal(id, name, classId, order);
                         });
 
-                        item.querySelector('.btn-danger').addEventListener('click', (e) => {
+                        item.querySelector('.delete-student-btn').addEventListener('click', (e) => {
                             const { id, name } = e.currentTarget.dataset;
-                            // [修改] 刪除後保持捲動位置
-                             showConfirmationModal('刪除學生', `確定要刪除學生 "${name}" 嗎？`, async () => {
-                                // const listEl = document.getElementById('student-management-list'); // [修復] 移除，此元素在確認彈窗中不存在
-                                // const scrollTop = listEl.scrollTop; // [修復] 移除
+                            showConfirmationModal('刪除學生', `確定要刪除學生「${name}」嗎？`, async () => {
                                 try {
                                     await db.collection('students').doc(id).delete();
-                                    // await renderStudentManagementList(); // [修復] 移除，列表會在下次打開時重建
-                                    await loadStudentData(); // [保留] 更新主頁面的學生列表
-                                    // document.getElementById('student-management-list').scrollTop = scrollTop; // [修復] 移除
-                                    hideModal(); // [修復] 刪除成功後關閉彈窗
-                                } catch (error) { 
-                                    console.error("Error deleting student:", error); 
+                                    await loadStudentData();
+                                    hideModal();
+                                } catch (error) {
+                                    console.error("Error deleting student:", error);
                                     alert('刪除失敗。');
-                                    hideModal(); // [修復] 發生錯誤也關閉彈窗
+                                    hideModal();
                                 }
                             });
                         });
+
                         listEl.appendChild(item);
                     });
-                } catch(error) {
+                } catch (error) {
                     console.error("Error rendering student list:", error);
                     listEl.innerHTML = `<div class="empty-state" style="color:var(--danger-color);">無法載入學生列表。</div>`;
                 }
@@ -1496,10 +1579,10 @@
             // --- 初始化與事件綁定 ---
             function initializeApp() {
                 dateInput.value = getTodayDateString();
-                loadClasses(); 
-                
+                loadClasses();
+
                 dateInput.addEventListener('change', loadStudentData);
-                
+
                 document.getElementById('manage-classes-btn').addEventListener('click', (e) => { e.preventDefault(); showClassManagementModal(); });
                 document.getElementById('manage-students-btn').addEventListener('click', (e) => { e.preventDefault(); showStudentManagementModal(); });
                 document.getElementById('view-report-btn').addEventListener('click', (e) => { e.preventDefault(); showReportModal(); });
@@ -1515,6 +1598,3 @@
     </script>
 </body>
 </html>
-
-
-
