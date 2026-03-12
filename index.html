@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>課後功課輔導班點名系統</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0f0f0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <script type="module" src="/src/main.js"></script>
 </head>
 <body>
@@ -37,8 +41,10 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="attendance-date">選擇日期</label>
-                    <input type="date" id="attendance-date" class="date-picker">
+                    <label>選擇日期</label>
+                    <!-- 隱藏的原生 input，月曆組件會更新它的值 -->
+                    <input type="date" id="attendance-date" style="display:none">
+                    <div id="date-picker-wrapper" class="date-picker-wrapper"></div>
                 </div>
             </div>
         </div>
@@ -58,6 +64,22 @@
         </div>
 
     </div>
+
+    <!-- 手機底部導覽 -->
+    <nav class="mobile-bottom-nav">
+        <a href="#" id="mobile-classes-btn" class="mobile-nav-item">
+            <i class="fas fa-chalkboard-user"></i>
+            <span>班級</span>
+        </a>
+        <a href="#" id="mobile-students-btn" class="mobile-nav-item">
+            <i class="fas fa-users"></i>
+            <span>學生</span>
+        </a>
+        <a href="#" id="mobile-report-btn" class="mobile-nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>報告</span>
+        </a>
+    </nav>
 
     <!-- 彈窗 -->
     <div id="modal-container" class="modal-overlay">

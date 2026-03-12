@@ -68,7 +68,11 @@ export async function showStudentManagementModal() {
   const options = state.classesCache.map(c => `<option value="${c.id}">${c.name}</option>`).join('')
 
   showModal('學生管理', `
-    <div id="student-management-list" style="max-height: 420px; overflow-y: auto;"></div>
+    <div class="search-wrapper" style="margin-bottom: 0.75rem;">
+      <i class="fas fa-search search-icon"></i>
+      <input id="student-mgmt-search" class="search-input" type="text" placeholder="搜尋學生姓名...">
+    </div>
+    <div id="student-management-list" style="max-height: 360px; overflow-y: auto;"></div>
     <form id="add-student-form" class="management-form">
       <input type="text" id="new-student-name" class="form-control" placeholder="新學生姓名" required style="flex-grow: 1; min-width: 120px;">
       <select id="new-student-class" class="form-control" style="width: 140px;">${options}</select>
@@ -77,6 +81,14 @@ export async function showStudentManagementModal() {
     </form>
   `)
   await renderStudentList()
+
+  document.getElementById('student-mgmt-search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase()
+    document.querySelectorAll('#student-management-list .management-list-item').forEach(item => {
+      const name = item.querySelector('.management-list-item-name')?.textContent.toLowerCase() ?? ''
+      item.style.display = name.includes(q) ? '' : 'none'
+    })
+  })
 
   document.getElementById('add-student-form').addEventListener('submit', async e => {
     e.preventDefault()

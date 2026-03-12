@@ -2,4 +2,5 @@
 export const state = {
   currentClassId: null,
   classesCache: [],
+  currentStudents: [],
 }
