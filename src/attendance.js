@@ -130,10 +130,6 @@ function renderStudentList(students, recordsMap) {
 
   listContainer.innerHTML = `
     <div class="list-toolbar">
-      <div class="search-wrapper">
-        <i class="fas fa-search search-icon"></i>
-        <input id="student-search" class="search-input" type="text" placeholder="搜尋學生姓名...">
-      </div>
       <div class="bulk-actions">
         <button id="bulk-present-btn" class="btn btn-success btn-sm">
           <i class="fas fa-check"></i> 全部出席
@@ -179,13 +175,6 @@ function renderStudentList(students, recordsMap) {
 
   listContainer.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', handleAttendanceClick))
   listContainer.querySelectorAll('.score-btn').forEach(btn => btn.addEventListener('click', handleScoreClick))
-
-  document.getElementById('student-search').addEventListener('input', e => {
-    const q = e.target.value.trim().toLowerCase()
-    listEl.querySelectorAll('.student-card').forEach(card => {
-      card.style.display = card.dataset.name.toLowerCase().includes(q) ? '' : 'none'
-    })
-  })
 
   document.getElementById('bulk-present-btn').addEventListener('click', () => markAllStudents('present'))
   document.getElementById('bulk-absent-btn').addEventListener('click', () => markAllStudents('absent'))
