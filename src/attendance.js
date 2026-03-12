@@ -5,6 +5,7 @@ import {
 import { db } from './firebase.js'
 import { state } from './state.js'
 import { showNotification } from './ui.js'
+import { refreshMonthDots } from './calendar.js'
 
 // --- 日期工具 ---
 
@@ -77,12 +78,14 @@ export async function loadStudentData() {
   }
 
   listContainer.innerHTML = '<div class="loader">載入中...</div>'
+  _clearStats()
 
   try {
     const studentsSnap = await getDocs(
       query(collection(db, 'students'), where('classId', '==', state.currentClassId), orderBy('order'))
     )
     const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    state.currentStudents = students
 
     if (students.length === 0) {
       listContainer.innerHTML = `<div class="empty-state"><i class="fas fa-user-graduate"></i><p>這個班級目前沒有學生。</p></div>`
@@ -103,6 +106,7 @@ export async function loadStudentData() {
     })
 
     renderStudentList(students, recordsMap)
+    refreshMonthDots()
   } catch (error) {
     console.error('Error loading students:', error)
     listContainer.innerHTML = `<div class="empty-state" style="color:var(--danger-color);">${_studentErrorMsg(error)}</div>`
@@ -113,7 +117,26 @@ export async function loadStudentData() {
 
 function renderStudentList(students, recordsMap) {
   const listContainer = document.getElementById('attendance-list-container')
-  listContainer.innerHTML = '<div class="student-list"></div>'
+
+  // Search bar + bulk buttons row
+  listContainer.innerHTML = `
+    <div class="list-toolbar">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input id="student-search" class="search-input" type="text" placeholder="搜尋學生姓名...">
+      </div>
+      <div class="bulk-actions">
+        <button id="bulk-present-btn" class="btn btn-success btn-sm">
+          <i class="fas fa-check"></i> 全部出席
+        </button>
+        <button id="bulk-absent-btn" class="btn btn-danger btn-sm">
+          <i class="fas fa-times"></i> 全部缺席
+        </button>
+      </div>
+    </div>
+    <div id="attendance-stats" class="attendance-stats"></div>
+    <div class="student-list"></div>
+  `
   const listEl = listContainer.querySelector('.student-list')
 
   students.forEach(student => {
@@ -128,6 +151,7 @@ function renderStudentList(students, recordsMap) {
 
     const item = document.createElement('div')
     item.className = 'student-card'
+    item.dataset.name = student.name
     item.innerHTML = `
       <div class="student-name">${student.name}</div>
       <div class="attendance-toggle">
@@ -144,6 +168,78 @@ function renderStudentList(students, recordsMap) {
 
   listContainer.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', handleAttendanceClick))
   listContainer.querySelectorAll('.score-btn').forEach(btn => btn.addEventListener('click', handleScoreClick))
+
+  // Search filter
+  document.getElementById('student-search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase()
+    listEl.querySelectorAll('.student-card').forEach(card => {
+      card.style.display = card.dataset.name.toLowerCase().includes(q) ? '' : 'none'
+    })
+  })
+
+  // Bulk buttons
+  document.getElementById('bulk-present-btn').addEventListener('click', () => markAllStudents('present'))
+  document.getElementById('bulk-absent-btn').addEventListener('click', () => markAllStudents('absent'))
+
+  updateAttendanceStats()
+}
+
+// --- 出席統計 ---
+
+export function updateAttendanceStats() {
+  const statsEl = document.getElementById('attendance-stats')
+  if (!statsEl) return
+  const total = state.currentStudents.length
+  if (total === 0) { statsEl.innerHTML = ''; return }
+  const present = document.querySelectorAll('.toggle-btn.present.active').length
+  const pct = Math.round((present / total) * 100)
+  statsEl.innerHTML = `
+    <div class="stats-row">
+      <span class="stats-label">出席統計</span>
+      <span class="stats-count">${present} / ${total} 人</span>
+      <span class="stats-pct">${pct}%</span>
+    </div>
+    <div class="stats-track">
+      <div class="stats-fill" style="width:${pct}%"></div>
+    </div>
+  `
+}
+
+function _clearStats() {
+  const el = document.getElementById('attendance-stats')
+  if (el) el.innerHTML = ''
+}
+
+// --- 一鍵全部標記 ---
+
+export async function markAllStudents(status) {
+  if (!state.currentStudents.length) return
+  const selectedDate = document.getElementById('attendance-date').value
+  if (!selectedDate) return
+
+  const promises = state.currentStudents.map(student => {
+    const recordRef = doc(db, 'records', `${selectedDate}_${student.id}`)
+    return setDoc(recordRef, {
+      studentId: student.id,
+      date: selectedDate,
+      classId: state.currentClassId,
+      status,
+    }, { merge: true })
+  })
+
+  try {
+    await Promise.all(promises)
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.classList.remove('active')
+      if (btn.dataset.status === status) btn.classList.add('active')
+    })
+    updateAttendanceStats()
+    showNotification(`全部學生已標記為${status === 'present' ? '出席' : '缺席'}`, 'success')
+    refreshMonthDots()
+  } catch (err) {
+    console.error(err)
+    showNotification('批量操作失敗，請重試', 'error')
+  }
 }
 
 // --- 出席點擊 ---
@@ -164,6 +260,7 @@ async function handleAttendanceClick(event) {
       console.error(err)
       showNotification('操作失敗，請重試', 'error')
     }
+    updateAttendanceStats()
     return
   }
 
@@ -175,11 +272,13 @@ async function handleAttendanceClick(event) {
       studentId, date: selectedDate, classId: state.currentClassId, status,
     }, { merge: true })
     showNotification(`已標記為${status === 'present' ? '出席' : '缺席'}`, 'success', 2000)
+    refreshMonthDots()
   } catch (err) {
     console.error(err)
     button.classList.remove('active')
     showNotification('無法更新，網絡異常', 'error')
   }
+  updateAttendanceStats()
 }
 
 // --- 得分點擊 ---
