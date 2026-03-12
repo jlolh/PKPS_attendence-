@@ -30,19 +30,19 @@ async function main() {
   initCalendar(todayStr)
   loadClasses()
 
-  // --- 導覽列按鈕 ---
-  document.getElementById('manage-classes-btn').addEventListener('click', e => {
-    e.preventDefault()
-    showClassManagementModal()
-  })
-  document.getElementById('manage-students-btn').addEventListener('click', e => {
-    e.preventDefault()
-    showStudentManagementModal()
-  })
-  document.getElementById('view-report-btn').addEventListener('click', e => {
-    e.preventDefault()
-    showReportModal()
-  })
+  // --- 導覽列按鈕 (桌面 + 手機共用 handler) ---
+  const onClasses  = e => { e.preventDefault(); showClassManagementModal() }
+  const onStudents = e => { e.preventDefault(); showStudentManagementModal() }
+  const onReport   = e => { e.preventDefault(); showReportModal() }
+
+  document.getElementById('manage-classes-btn').addEventListener('click', onClasses)
+  document.getElementById('manage-students-btn').addEventListener('click', onStudents)
+  document.getElementById('view-report-btn').addEventListener('click', onReport)
+
+  // 手機底部導覽
+  document.getElementById('mobile-classes-btn')?.addEventListener('click', onClasses)
+  document.getElementById('mobile-students-btn')?.addEventListener('click', onStudents)
+  document.getElementById('mobile-report-btn')?.addEventListener('click', onReport)
 
   // --- Modal 關閉 ---
   const modalContainer = document.getElementById('modal-container')
