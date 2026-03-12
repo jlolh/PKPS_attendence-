@@ -122,6 +122,12 @@ function _selectDate(dateStr) {
   _close()
 }
 
+// 單次本地更新 dot（點名後無需重查 Firebase）
+export function addMarkedDate(dateStr) {
+  markedDates.add(dateStr)
+  _renderGrid()
+}
+
 export async function refreshMonthDots() {
   if (!state.currentClassId) { _renderGrid(); return }
   const mm = String(viewMonth + 1).padStart(2, '0')
