@@ -5,6 +5,7 @@ import { initCalendar } from './calendar.js'
 import { showClassManagementModal } from './classes.js'
 import { showStudentManagementModal } from './students.js'
 import { showReportModal } from './report.js'
+import { showStaffLoginModal } from './incidents.js'
 import { hideModal } from './ui.js'
 
 async function main() {
@@ -34,15 +35,18 @@ async function main() {
   const onClasses  = e => { e.preventDefault(); showClassManagementModal() }
   const onStudents = e => { e.preventDefault(); showStudentManagementModal() }
   const onReport   = e => { e.preventDefault(); showReportModal() }
+  const onStaff    = e => { e.preventDefault(); showStaffLoginModal() }
 
   document.getElementById('manage-classes-btn').addEventListener('click', onClasses)
   document.getElementById('manage-students-btn').addEventListener('click', onStudents)
   document.getElementById('view-report-btn').addEventListener('click', onReport)
+  document.getElementById('staff-area-btn').addEventListener('click', onStaff)
 
   // 手機底部導覽
   document.getElementById('mobile-classes-btn')?.addEventListener('click', onClasses)
   document.getElementById('mobile-students-btn')?.addEventListener('click', onStudents)
   document.getElementById('mobile-report-btn')?.addEventListener('click', onReport)
+  document.getElementById('mobile-staff-btn')?.addEventListener('click', onStaff)
 
   // --- Modal 關閉 ---
   const modalContainer = document.getElementById('modal-container')
