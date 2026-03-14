@@ -799,23 +799,18 @@ h1, h2, h3 { font-family: var(--font); font-weight: 800; color: var(--black); }
   .date-picker-wrapper { width: 100%; }
   .cal-trigger { width: 100%; box-sizing: border-box; }
 
-  /* ── 班級按鈕 — 橫向捲動 ── */
+  /* ── 班級按鈕 — 全部顯示，自動換行 ── */
   .class-buttons-container {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    padding-bottom: 4px;
-    gap: 0.5rem;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 0.4rem;
   }
-  .class-buttons-container::-webkit-scrollbar { display: none; }
   .class-btn {
     white-space: nowrap;
     flex-shrink: 0;
-    min-height: 42px;
-    padding: 0.45rem 1rem;
-    font-size: 0.875rem;
+    min-height: 36px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
   }
 
   /* ── 工具列 ── */
@@ -926,6 +921,7 @@ h1, h2, h3 { font-family: var(--font); font-weight: 800; color: var(--black); }
   .page-title { font-size: 0.95rem; }
   .page-title .logo { font-size: 1rem; }
   .card { padding: 0.7rem; }
+  .class-btn { font-size: 0.75rem; padding: 0.3rem 0.6rem; min-height: 32px; }
   .attendance-toggle { min-width: 110px; }
   .toggle-btn { font-size: 0.78rem; padding: 0.3rem 0.4rem; }
   .score-btn { width: 34px; height: 34px; font-size: 0.8rem; }
