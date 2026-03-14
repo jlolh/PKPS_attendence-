@@ -152,6 +152,9 @@ h1, h2, h3 { font-family: var(--font); font-weight: 800; color: var(--black); }
   gap: 1.5rem;
 }
 
+/* 防止 grid cell 的 min-width:auto 撐破 1fr 寬度 */
+.controls-grid > * { min-width: 0; }
+
 .form-group { margin-bottom: 1rem; }
 
 .form-group label {
@@ -784,7 +787,11 @@ h1, h2, h3 { font-family: var(--font); font-weight: 800; color: var(--black); }
 
   /* ── 表單 ── */
   .controls-grid { grid-template-columns: 1fr; gap: 0.85rem; }
-  .form-group { margin-bottom: 0.75rem; }
+  .form-group { margin-bottom: 0.75rem; min-width: 0; }
+
+  /* 日期選擇器佔滿欄寬 */
+  .date-picker-wrapper { width: 100%; }
+  .cal-trigger { width: 100%; box-sizing: border-box; }
 
   /* ── 班級按鈕 — 橫向捲動 ── */
   .class-buttons-container {
