@@ -6,6 +6,7 @@ import { db } from './firebase.js'
 import { state } from './state.js'
 import { showNotification } from './ui.js'
 import { refreshMonthDots, addMarkedDate } from './calendar.js'
+import { loadCleanliness, saveCleanliness } from './cleanliness.js'
 
 // --- HTML 轉義 (防止 XSS) ---
 
@@ -114,7 +115,9 @@ export async function loadStudentData() {
       recordsMap[data.studentId] = data
     })
 
-    renderStudentList(students, recordsMap)
+    const cleanStatus = await loadCleanliness(state.currentClassId, selectedDate)
+
+    renderStudentList(students, recordsMap, cleanStatus)
     // 切換班級或日期時才重查月曆 dots
     refreshMonthDots()
   } catch (error) {
@@ -125,7 +128,7 @@ export async function loadStudentData() {
 
 // --- 渲染學生名單 ---
 
-function renderStudentList(students, recordsMap) {
+function renderStudentList(students, recordsMap, cleanStatus = null) {
   const listContainer = document.getElementById('attendance-list-container')
 
   listContainer.innerHTML = `
@@ -136,6 +139,14 @@ function renderStudentList(students, recordsMap) {
         </button>
         <button id="bulk-absent-btn" class="btn btn-danger btn-sm">
           <i class="fas fa-times"></i> 全部缺席
+        </button>
+      </div>
+      <div class="cleanliness-toggle">
+        <button id="clean-pass-btn" class="clean-btn ${cleanStatus === 'pass' ? 'active pass' : ''}">
+          <i class="fas fa-broom"></i> 清潔達標
+        </button>
+        <button id="clean-fail-btn" class="clean-btn ${cleanStatus === 'fail' ? 'active fail' : ''}">
+          <i class="fas fa-times-circle"></i> 不達標
         </button>
       </div>
     </div>
@@ -178,6 +189,41 @@ function renderStudentList(students, recordsMap) {
 
   document.getElementById('bulk-present-btn').addEventListener('click', () => markAllStudents('present'))
   document.getElementById('bulk-absent-btn').addEventListener('click', () => markAllStudents('absent'))
+
+  // 清潔達標 / 不達標 按鈕
+  const cleanPassBtn = document.getElementById('clean-pass-btn')
+  const cleanFailBtn = document.getElementById('clean-fail-btn')
+
+  const handleCleanClick = async (newStatus) => {
+    const selectedDate = document.getElementById('attendance-date').value
+    if (!selectedDate || !state.currentClassId) return
+
+    // 若已 active → 點擊同一個 = 清除
+    const isToggleOff = (newStatus === 'pass' && cleanPassBtn.classList.contains('active'))
+                     || (newStatus === 'fail' && cleanFailBtn.classList.contains('active'))
+    const saveStatus = isToggleOff ? null : newStatus
+
+    cleanPassBtn.disabled = true
+    cleanFailBtn.disabled = true
+    try {
+      await saveCleanliness(state.currentClassId, selectedDate, saveStatus)
+      cleanPassBtn.classList.toggle('active', saveStatus === 'pass')
+      cleanPassBtn.classList.toggle('pass',   saveStatus === 'pass')
+      cleanFailBtn.classList.toggle('active', saveStatus === 'fail')
+      cleanFailBtn.classList.toggle('fail',   saveStatus === 'fail')
+      const label = saveStatus === 'pass' ? '✅ 清潔達標' : saveStatus === 'fail' ? '❌ 清潔不達標' : '已清除清潔記錄'
+      showNotification(label, saveStatus === 'pass' ? 'success' : saveStatus === 'fail' ? 'error' : 'info', 2000)
+    } catch (err) {
+      console.error('saveCleanliness error:', err)
+      showNotification('儲存失敗，請重試', 'error')
+    } finally {
+      cleanPassBtn.disabled = false
+      cleanFailBtn.disabled = false
+    }
+  }
+
+  cleanPassBtn.addEventListener('click', () => handleCleanClick('pass'))
+  cleanFailBtn.addEventListener('click', () => handleCleanClick('fail'))
 
   updateAttendanceStats()
 }

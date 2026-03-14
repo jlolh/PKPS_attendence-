@@ -856,3 +856,187 @@ h1, h2, h3 { font-family: var(--font); font-weight: 800; color: var(--black); }
   .card-title { font-size: 0.95rem; }
   .card-title-icon { width: 30px; height: 30px; font-size: 0.8rem; }
 }
+
+/* ============================================================
+   職員專區 Nav 連結
+   ============================================================ */
+.action-link--staff {
+  background: #ffe600;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 0.35rem 0.75rem;
+  transition: all 0.15s;
+}
+.action-link--staff:hover {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+/* ============================================================
+   清潔達標按鈕
+   ============================================================ */
+.cleanliness-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.clean-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: 0.85rem;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--black);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 38px;
+}
+
+.clean-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--black);
+}
+
+.clean-btn.active.pass {
+  background: var(--success-light);
+  border-color: var(--success);
+  box-shadow: 2px 2px 0 var(--success);
+  color: var(--success);
+}
+
+.clean-btn.active.fail {
+  background: var(--danger-light);
+  border-color: var(--danger);
+  box-shadow: 2px 2px 0 var(--danger);
+  color: var(--danger);
+}
+
+@media (max-width: 768px) {
+  .cleanliness-toggle { margin-left: 0; width: 100%; }
+  .clean-btn { flex: 1; justify-content: center; }
+}
+
+/* ============================================================
+   職員登入
+   ============================================================ */
+.staff-login {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.staff-login-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--black);
+}
+
+.staff-login-hint {
+  font-weight: 700;
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+/* ============================================================
+   突發情況表單
+   ============================================================ */
+.incident-form {
+  background: var(--bg);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.incident-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.incident-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+/* ============================================================
+   突發情況列表
+   ============================================================ */
+.incidents-list {
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.incident-item {
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.incident-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  background: #fffbeb;
+  border-bottom: var(--border);
+  gap: 0.5rem;
+}
+
+.incident-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.incident-datetime { color: var(--black); }
+.incident-student  { color: var(--primary); }
+
+.incident-item-body {
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.incident-field {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.incident-field-label {
+  font-weight: 800;
+  white-space: nowrap;
+  min-width: 70px;
+  color: var(--black);
+}
+
+.incident-field-value {
+  color: #374151;
+  word-break: break-word;
+}
+
+@media (max-width: 600px) {
+  .incident-form-grid { grid-template-columns: 1fr; }
+  .incident-form-actions { flex-direction: column; }
+  .incident-form-actions .btn { width: 100%; justify-content: center; }
+}
