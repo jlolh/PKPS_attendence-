@@ -3,6 +3,7 @@ import {
   getDocs, addDoc, deleteDoc, doc,
 } from 'firebase/firestore'
 import { db } from './firebase.js'
+import { state } from './state.js'
 import { showModal } from './ui.js'
 
 const STAFF_PASSWORD = '4501'
@@ -63,6 +64,31 @@ export function showStaffLoginModal() {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin() })
 }
 
+// --- 建立學生 <select> 選項 ---
+
+async function buildStudentOptions() {
+  // 優先用已載入的 classesCache；classes 未載入時補查
+  const classMap = new Map(state.classesCache.map(c => [c.id, c.name]))
+
+  const snap = await getDocs(query(collection(db, 'students'), orderBy('order')))
+  if (snap.empty) return '<option value="" disabled>（沒有學生資料）</option>'
+
+  // 按班級分組
+  const groups = {}
+  snap.docs.forEach(d => {
+    const s = { id: d.id, ...d.data() }
+    const cls = classMap.get(s.classId) ?? '未知班級'
+    if (!groups[cls]) groups[cls] = []
+    groups[cls].push(s)
+  })
+
+  return Object.entries(groups).map(([cls, students]) => `
+    <optgroup label="${_esc(cls)}">
+      ${students.map(s => `<option value="${_esc(s.name)}">${_esc(s.name)}</option>`).join('')}
+    </optgroup>
+  `).join('')
+}
+
 // --- 職員面板 ---
 
 async function showStaffPanel() {
@@ -70,6 +96,7 @@ async function showStaffPanel() {
   const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString().slice(0, 16)
 
+  // 先展示骨架，再載入學生選項
   showModal('職員專區 — 突發情況紀錄', `
     <form id="add-incident-form" class="incident-form">
       <div class="incident-form-grid">
@@ -79,7 +106,9 @@ async function showStaffPanel() {
         </div>
         <div class="form-group">
           <label>學生姓名</label>
-          <input type="text" id="incident-student" class="form-control" placeholder="學生姓名" required>
+          <select id="incident-student" class="form-control" required>
+            <option value="">載入中…</option>
+          </select>
         </div>
       </div>
       <div class="form-group">
@@ -102,6 +131,12 @@ async function showStaffPanel() {
     <div id="incidents-list" class="incidents-list"></div>
   `)
 
+  // 非同步填充學生選項
+  buildStudentOptions().then(optHtml => {
+    const sel = document.getElementById('incident-student')
+    if (sel) sel.innerHTML = '<option value="">— 請選擇學生 —</option>' + optHtml
+  })
+
   await renderIncidents()
 
   document.getElementById('add-incident-form').addEventListener('submit', async e => {
@@ -110,7 +145,7 @@ async function showStaffPanel() {
     btn.disabled = true
 
     const datetime = document.getElementById('incident-datetime').value
-    const student  = document.getElementById('incident-student').value.trim()
+    const student  = document.getElementById('incident-student').value
     const desc     = document.getElementById('incident-desc').value.trim()
     const handling = document.getElementById('incident-handling').value.trim()
 
@@ -122,7 +157,7 @@ async function showStaffPanel() {
         handling,
         createdAt: new Date().toISOString(),
       })
-      document.getElementById('incident-student').value = ''
+      document.getElementById('incident-student').value = ''  // reset to placeholder
       document.getElementById('incident-desc').value = ''
       document.getElementById('incident-handling').value = ''
       await renderIncidents()

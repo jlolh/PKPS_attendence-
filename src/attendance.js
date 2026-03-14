@@ -141,13 +141,12 @@ function renderStudentList(students, recordsMap, cleanStatus = null) {
           <i class="fas fa-times"></i> 全部缺席
         </button>
       </div>
-      <div class="cleanliness-toggle">
-        <button id="clean-pass-btn" class="clean-btn ${cleanStatus === 'pass' ? 'active pass' : ''}">
-          <i class="fas fa-broom"></i> 清潔達標
-        </button>
-        <button id="clean-fail-btn" class="clean-btn ${cleanStatus === 'fail' ? 'active fail' : ''}">
-          <i class="fas fa-times-circle"></i> 不達標
-        </button>
+      <div class="cleanliness-group">
+        <span class="cleanliness-label"><i class="fas fa-broom"></i> 清潔</span>
+        <div class="cleanliness-toggle">
+          <button id="clean-pass-btn" class="clean-btn ${cleanStatus === 'pass' ? 'active pass' : ''}">達標</button>
+          <button id="clean-fail-btn" class="clean-btn ${cleanStatus === 'fail' ? 'active fail' : ''}">不達標</button>
+        </div>
       </div>
     </div>
     <div id="attendance-stats" class="attendance-stats"></div>

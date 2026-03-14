@@ -34,10 +34,11 @@ async function generateReport() {
   const endDate = `${monthInput}-${String(lastDay).padStart(2, '0')}`
 
   try {
-    const [classesSnap, studentsSnap, recordsSnap] = await Promise.all([
+    const [classesSnap, studentsSnap, recordsSnap, cleanSnap] = await Promise.all([
       getDocs(query(collection(db, 'classes'), orderBy('order'))),
       getDocs(query(collection(db, 'students'), orderBy('order'))),
       getDocs(query(collection(db, 'records'), where('date', '>=', startDate), where('date', '<=', endDate))),
+      getDocs(query(collection(db, 'cleanliness'), where('date', '>=', startDate), where('date', '<=', endDate))),
     ])
 
     if (recordsSnap.empty) {
@@ -47,6 +48,15 @@ async function generateReport() {
 
     const studentMap = new Map(studentsSnap.docs.map(d => [d.id, d.data()]))
     const allClasses = classesSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+    // 建立清潔地圖 { classId: { dateStr: 'pass'|'fail' } }
+    const cleanMap = {}
+    cleanSnap.forEach(d => {
+      const { classId, date, status } = d.data()
+      if (!classId || !date || !status) return
+      if (!cleanMap[classId]) cleanMap[classId] = {}
+      cleanMap[classId][date] = status
+    })
 
     // 建立 { classId: { studentId: { dateStr: {status, score} } } } 結構
     const reportData = {}
@@ -64,6 +74,14 @@ async function generateReport() {
     const excelScore = {}
     let attHtml = '<h2>出席報告</h2>'
     let scoreHtml = '<h2 style="margin-top: 2.5rem;">得分報告</h2>'
+
+    // 清潔報告 Excel sheet (all classes in one sheet)
+    const dayHeaders = Array.from({ length: lastDay }, (_, i) => String(i + 1))
+    const cleanSheet = [['班級', ...dayHeaders, '達標次數', '不達標次數']]
+    let cleanHtml = '<h2 style="margin-top: 2.5rem;">清潔報告</h2>'
+    const cleanDayTH = dayHeaders.map(d => `<th>${d}</th>`).join('')
+    cleanHtml += `<table class="report-table"><thead><tr><th>班級</th>${cleanDayTH}<th>達標</th><th>不達標</th></tr></thead><tbody>`
+    let hasCleanData = false
 
     allClasses.forEach(cls => {
       const classData = reportData[cls.id]
@@ -169,9 +187,31 @@ async function generateReport() {
       scoreHtml += scoreBody
       grandAttendance += classAtt
       grandScore += classScore
+
     })
 
-    if (grandAttendance === 0 && grandScore === 0) {
+    // --- 清潔報告 (all classes, separate loop so no-attendance classes are included) ---
+    allClasses.forEach(cls => {
+      const clsClean = cleanMap[cls.id] ?? {}
+      let passCount = 0, failCount = 0
+      const cleanCells = []
+      const cleanExcelRow = [cls.name]
+      for (let day = 1; day <= lastDay; day++) {
+        const dateStr = `${monthInput}-${String(day).padStart(2, '0')}`
+        const st = clsClean[dateStr]
+        if (st === 'pass') { passCount++; cleanCells.push('<td style="color:var(--success-color,#16a34a);font-weight:700;">✓</td>'); cleanExcelRow.push('達標') }
+        else if (st === 'fail') { failCount++; cleanCells.push('<td style="color:var(--danger-color,#dc2626);font-weight:700;">✗</td>'); cleanExcelRow.push('不達標') }
+        else { cleanCells.push('<td></td>'); cleanExcelRow.push('') }
+      }
+      cleanExcelRow.push(passCount, failCount)
+      cleanSheet.push(cleanExcelRow)
+      cleanHtml += `<tr><td>${cls.name}</td>${cleanCells.join('')}<td style="color:var(--success-color,#16a34a);font-weight:700;">${passCount}</td><td style="color:var(--danger-color,#dc2626);font-weight:700;">${failCount}</td></tr>`
+      if (passCount + failCount > 0) hasCleanData = true
+    })
+
+    cleanHtml += '</tbody></table>'
+
+    if (grandAttendance === 0 && grandScore === 0 && !hasCleanData) {
       reportOutput.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i><p>該月份沒有任何記錄。</p></div>'
       return
     }
@@ -184,8 +224,8 @@ async function generateReport() {
         </div>
         <button id="export-excel-btn" class="btn btn-success"><i class="fas fa-file-excel"></i> 匯出 Excel</button>
       </div>`
-    reportOutput.innerHTML = summary + attHtml + scoreHtml
-    document.getElementById('export-excel-btn').addEventListener('click', () => exportToExcel(excelAtt, excelScore, monthInput))
+    reportOutput.innerHTML = summary + attHtml + scoreHtml + (hasCleanData ? cleanHtml : '')
+    document.getElementById('export-excel-btn').addEventListener('click', () => exportToExcel(excelAtt, excelScore, cleanSheet, monthInput))
 
   } catch (error) {
     console.error('Error generating report:', error)
@@ -195,8 +235,8 @@ async function generateReport() {
 
 // --- 匯出 Excel ---
 
-function exportToExcel(attendanceData, scoreData, monthInput) {
-  if (!Object.keys(attendanceData).length && !Object.keys(scoreData).length) {
+function exportToExcel(attendanceData, scoreData, cleanData, monthInput) {
+  if (!Object.keys(attendanceData).length && !Object.keys(scoreData).length && cleanData.length <= 1) {
     alert('沒有報告資料可匯出')
     return
   }
@@ -213,6 +253,12 @@ function exportToExcel(attendanceData, scoreData, monthInput) {
     const ws = XLSX.utils.aoa_to_sheet(data)
     ws['!cols'] = [{ wch: 20 }, ...Array(data[0].length - 2).fill({ wch: 4 }), { wch: 12 }]
     XLSX.utils.book_append_sheet(wb, ws, `${name.substring(0, 20)} - 得分報告`)
+  }
+
+  if (cleanData.length > 1) {
+    const ws = XLSX.utils.aoa_to_sheet(cleanData)
+    ws['!cols'] = [{ wch: 20 }, ...Array(cleanData[0].length - 3).fill({ wch: 5 }), { wch: 10 }, { wch: 10 }]
+    XLSX.utils.book_append_sheet(wb, ws, '清潔報告')
   }
 
   XLSX.writeFile(wb, `全校月度報告-${monthInput}.xlsx`)
